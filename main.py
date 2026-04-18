@@ -1,13 +1,15 @@
-import numpy as np
+from layer import LinearLayer, ReLU
+from loss_function import MseLoss
+from neural_network import NeuralNetwork
+from optimizer import SgdOptimizer
 
 
 def main():
-    # Create a simple 2D array
-    data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
 
-    print("Hello from uv!")
-    print(f"Here is a NumPy matrix:\n{data}")
-    print(f"The sum is: {np.sum(data, axis=1)}")
+    neural_net = NeuralNetwork(optimizer=SgdOptimizer(), loss_fn=MseLoss())
+    neural_net.add_layer(LinearLayer())
+    neural_net.add_layer(ReLU())
+    print(neural_net)
 
 
 if __name__ == "__main__":

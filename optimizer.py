@@ -7,5 +7,13 @@ class Optimizer(ABC):
         pass
 
     @abstractmethod
-    def __str__(self):
+    def __str__(self) -> str:
+        return "Optimizer()"
+
+
+class SgdOptimizer(Optimizer):
+    def step(self):
         pass
+
+    def __str__(self) -> str:
+        return "SgdOptimizer()"
