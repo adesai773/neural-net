@@ -1,8 +1,8 @@
 import numpy as np
 
-from layer import Layer
-from loss_function import LossFunction
-from optimizer import Optimizer
+from .layer import Layer
+from .loss_function import LossFunction
+from .optimizer import Optimizer
 
 
 class NeuralNetwork:

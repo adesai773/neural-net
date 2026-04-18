@@ -1,7 +1,7 @@
-from layer import LinearLayer, ReLU
-from loss_function import MseLoss
-from neural_network import NeuralNetwork
-from optimizer import SgdOptimizer
+from neural_net.layer import LinearLayer, ReLU
+from neural_net.loss_function import MseLoss
+from neural_net.neural_network import NeuralNetwork
+from neural_net.optimizer import SgdOptimizer
 
 
 def main():
