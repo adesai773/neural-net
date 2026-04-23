@@ -6,7 +6,6 @@ class Layer(ABC):
     def forward(self):
         pass
 
-    @abstractmethod
     def __str__(self) -> str:
         return "Layer()"
 

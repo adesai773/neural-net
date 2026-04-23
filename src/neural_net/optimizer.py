@@ -6,7 +6,6 @@ class Optimizer(ABC):
     def step(self):
         pass
 
-    @abstractmethod
     def __str__(self) -> str:
         return "Optimizer()"
 

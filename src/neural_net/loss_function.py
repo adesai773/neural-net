@@ -6,7 +6,6 @@ class LossFunction(ABC):
     def compute_loss(self):
         pass
 
-    @abstractmethod
     def __str__(self) -> str:
         return "LossFunction()"
 
