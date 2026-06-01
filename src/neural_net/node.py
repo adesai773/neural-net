@@ -20,6 +20,12 @@ class Node:
         self.requires_grad: bool = requires_grad
         self.grad: np.ndarray | None = None
 
+    def accumulate_grad(self, dg: np.ndarray) -> None:
+        if self.grad is None:
+            self.grad = dg
+        else:
+            self.grad += dg
+
     def backward(self) -> None:
         pass
 
