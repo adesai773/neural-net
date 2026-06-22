@@ -8,7 +8,20 @@ from .node import Node
 
 class Layer(ABC):
     def __call__(self, *args: Node) -> Node:
-        return Node(np.array(0))
+        raw_data = [node.data for node in args]
+        raw_params = [p.data for p in self.parameters()]
+
+        out_data = self.forward(*raw_data, *raw_params)
+        requires_grad = any(node.requires_grad for node in args) or any(
+            p.requires_grad for p in self.parameters()
+        )
+
+        return Node(
+            out_data,
+            creator=self,
+            parents=[*args, *self.parameters()],
+            requires_grad=requires_grad,
+        )
 
     def parameters(self) -> list[Node]:
         return []
@@ -41,44 +54,59 @@ class Linear(Layer):
         # dimensions: out_features
         self.b_node: Node = Node(data=np.zeros(out_features))
 
-    def forward(self, X_in: np.ndarray) -> np.ndarray:
+    def forward(self, X_in: np.ndarray, W: np.ndarray, b: np.ndarray) -> np.ndarray:
         assert X_in.ndim == 2, (
             f"Linear.forward expects 2-D input (batch, in_features), got shape {X_in.shape}"
         )
+        assert W.ndim == 2, (
+            f"Linear.forward expects 2-D Weights (in_features, out_features), got shape {W.shape}"
+        )
+        assert b.ndim == 1, (
+            f"Linear.forward expects 1-D biases (out_features), got shape {b.shape}"
+        )
+        in_features = W.shape[0]
+        out_features = W.shape[1]
+
+        assert X_in.shape[1] == in_features
+        assert b.shape[0] == out_features
 
         # X_in dimensions: N x in_features
-        # X_in @ self.W_node.data produces dimensions N x out_features
+        # X_in @ W produces dimensions N x out_features
         # adding to b_node (broadcast to N x out_features) produces dimensions N x out_features
-        return X_in @ self.W_node.data + self.b_node.data
+        return X_in @ W + b
 
     def backward(
         self, upstream_grad: np.ndarray, parents: list[Node]
     ) -> list[np.ndarray]:
-        assert len(parents) == 1, (
-            f"Linear.backward expects exactly one parent, got {len(parents)}"
+        assert len(parents) == 3, (
+            f"Linear.backward expects exactly 3 parents, got {len(parents)}"
         )
 
-        # Only 1 input node (X_in) with dimensions N x in_features
         X = parents[0].data
+        W = parents[1].data
+        b = parents[2].data
+
         assert X.ndim == 2, (
-            f"Linear.backward expects 2-D parent data, got shape {X.shape}"
+            f"Linear.backward expects 2-D parent (input) data, got shape {X.shape}"
+        )
+        assert W.ndim == 2, (
+            f"Linear.backward expects 2-D parent (weights) data, got shape {W.shape}"
+        )
+        assert b.ndim == 1, (
+            f"Linear.backward expects 1-D parent (biases), got shape {b.shape}"
         )
 
-        expected_upstream_grad_shape = (X.shape[0], self.W_node.data.shape[1])
+        expected_upstream_grad_shape = (X.shape[0], W.shape[1])
         assert upstream_grad.shape == expected_upstream_grad_shape, (
             f"upstream_grad must be {expected_upstream_grad_shape}, got {upstream_grad.shape}"
         )
 
         dL_dY = upstream_grad  # dimensions: N x out_features
-        dL_dX = dL_dY @ self.W_node.data.T  # dimensions N x in_features
+        dL_dX = dL_dY @ W.T  # dimensions N x in_features
         dL_dW = X.T @ dL_dY  # dimensions in_features x out_features
         dL_db = dL_dY.sum(axis=0)  # dimensions out_features
 
-        self.W_node.accumulate_grad(dL_dW)
-        self.b_node.accumulate_grad(dL_db)
-
-        # Single output (dL / dX_in) to match the single parent
-        return [dL_dX]  # Dimensions N x in_features
+        return [dL_dX, dL_dW, dL_db]
 
     def parameters(self) -> list[Node]:
         return [self.W_node, self.b_node]

@@ -23,14 +23,38 @@ def test_linear_different_seeds_differ():
 
 
 def test_linear_call(linear: Linear):
-    assert linear() is not None
+    linear.W_node.data = np.array([[1, 2], [3, 4], [5, 6]])
+    linear.b_node.data = np.array([1, 1])
+
+    X_in_node = Node(np.array([[1, 1, 1]]))
+
+    out_node = linear(X_in_node)
+    assert out_node is not None
+    assert out_node.creator is linear
+    assert out_node.parents == [X_in_node, linear.W_node, linear.b_node]
+    assert np.array_equal(
+        out_node.data,
+        linear.forward(X_in_node.data, linear.W_node.data, linear.b_node.data),
+    )
+    assert out_node.requires_grad is True
+
+
+def test_linear_call_requires_grad_propagation(linear: Linear):
+    X_in_node = Node(np.array([[1, 1, 1]]), requires_grad=False)
+
+    out_node = linear(X_in_node)
+    assert out_node is not None
+    assert out_node.requires_grad is True
 
 
 def test_linear_forward(linear: Linear):
     linear.W_node.data = np.array([[1, 2], [3, 4], [5, 6]])
     linear.b_node.data = np.array([1, 1])
 
-    assert np.array_equal(linear.forward(np.array([[1, 1, 1]])), np.array([[10, 13]]))
+    assert np.array_equal(
+        linear.forward(np.array([[1, 1, 1]]), linear.W_node.data, linear.b_node.data),
+        np.array([[10, 13]]),
+    )
 
 
 def test_linear_forward_with_batch(linear: Linear):
@@ -38,7 +62,10 @@ def test_linear_forward_with_batch(linear: Linear):
     linear.b_node.data = np.array([1, 1])
 
     assert np.array_equal(
-        linear.forward(np.array([[1, 1, 1], [2, 0, 0]])), np.array([[10, 13], [3, 5]])
+        linear.forward(
+            np.array([[1, 1, 1], [2, 0, 0]]), linear.W_node.data, linear.b_node.data
+        ),
+        np.array([[10, 13], [3, 5]]),
     )
 
 
@@ -46,36 +73,15 @@ def test_linear_backward(linear: Linear):
     linear.W_node.data = np.array([[1, 2], [3, 4], [5, 6]])
     linear.b_node.data = np.array([1, 1])
 
-    x_in_node = Node(np.array([[1, 1, 1]]))
+    X_in_node = Node(np.array([[1, 1, 1]]))
+    parents = [X_in_node, linear.W_node, linear.b_node]
 
-    assert linear.W_node.grad is None
-    assert linear.b_node.grad is None
+    grads = linear.backward(np.array([[1, 2]]), parents)
+    dL_dX, dL_dW, dL_db = grads
 
-    parent_grad = linear.backward(np.array([[1, 2]]), [x_in_node])
-
-    assert len(parent_grad) == 1
-    assert np.array_equal(parent_grad[0], np.array([[5, 11, 17]]))
-    assert linear.W_node.grad is not None
-    assert np.array_equal(linear.W_node.grad, np.array([[1, 2], [1, 2], [1, 2]]))
-    assert linear.b_node.grad is not None
-    assert np.array_equal(linear.b_node.grad, np.array([1, 2]))
-
-
-def test_linear_backward_accumulates(linear: Linear):
-    linear.W_node.data = np.array([[1, 2], [3, 4], [5, 6]])
-    linear.b_node.data = np.array([1, 1])
-
-    x_in_node = Node(np.array([[1, 1, 1]]))
-    parent_grad = linear.backward(np.array([[1, 2]]), [x_in_node])
-    parent_grad_2 = linear.backward(np.array([[1, 2]]), [x_in_node])
-
-    # Gradients accumulate for W and b, stay the same for parents.
-    assert np.array_equal(parent_grad, parent_grad_2)
-    assert np.array_equal(parent_grad_2[0], np.array([[5, 11, 17]]))
-    assert linear.W_node.grad is not None
-    assert np.array_equal(linear.W_node.grad, np.array([[2, 4], [2, 4], [2, 4]]))
-    assert linear.b_node.grad is not None
-    assert np.array_equal(linear.b_node.grad, np.array([2, 4]))
+    assert np.array_equal(dL_dX, np.array([[5, 11, 17]]))
+    assert np.array_equal(dL_dW, np.array([[1, 2], [1, 2], [1, 2]]))
+    assert np.array_equal(dL_db, np.array([1, 2]))
 
 
 def test_linear_parameters(linear: Linear):
