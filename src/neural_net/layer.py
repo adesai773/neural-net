@@ -33,7 +33,7 @@ class Layer(ABC):
     @abstractmethod
     def backward(
         self, upstream_grad: np.ndarray, parents: list[Node]
-    ) -> list[np.ndarray]:
+    ) -> list[np.ndarray | None]:
         pass
 
     def __str__(self) -> str:
@@ -77,7 +77,7 @@ class Linear(Layer):
 
     def backward(
         self, upstream_grad: np.ndarray, parents: list[Node]
-    ) -> list[np.ndarray]:
+    ) -> list[np.ndarray | None]:
         assert len(parents) == 3, (
             f"Linear.backward expects exactly 3 parents, got {len(parents)}"
         )

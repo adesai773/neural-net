@@ -1,4 +1,7 @@
-from .node import Node
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .node import Node
 
 
 def topological_sort(root: Node) -> list[Node]:

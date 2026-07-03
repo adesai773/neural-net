@@ -18,7 +18,7 @@ class ReLU(Activation):
 
     def backward(
         self, upstream_grad: np.ndarray, parents: list[Node]
-    ) -> list[np.ndarray]:
+    ) -> list[np.ndarray | None]:
         return []
 
     def __str__(self) -> str:

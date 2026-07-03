@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from .utils import topological_sort
+
 if TYPE_CHECKING:
     from .layer import Layer
 
@@ -26,8 +28,31 @@ class Node:
         else:
             self.grad += dg
 
-    def backward(self) -> None:
-        pass
+    def backward(self, gradient: np.ndarray | None = None) -> None:
+        # Calling .backward() twice without zeroing grads first will accumulate
+        # gradients on leaves. Use Optimizer.zero_grad() between training steps.
+
+        assert self.requires_grad
+        if gradient is None:
+            assert self.data.size == 1, "Default gradient only works for scalar outputs"
+            gradient = np.ones_like(self.data)
+        self.grad = gradient
+
+        topologically_sorted_nodes = topological_sort(self)
+        for node in reversed(topologically_sorted_nodes):
+            if node.creator is None or node.grad is None:
+                continue
+
+            downstream_grads = node.creator.backward(
+                upstream_grad=node.grad, parents=node.parents
+            )
+            assert len(downstream_grads) == len(node.parents)
+
+            for parent_grad, parent in zip(downstream_grads, node.parents):
+                if not parent.requires_grad or parent_grad is None:
+                    continue
+
+                parent.accumulate_grad(parent_grad)
 
     def __str__(self) -> str:
         return f"Node(data={self.data}, creator={self.creator}, requires_grad={self.requires_grad}, grad={self.grad})"
