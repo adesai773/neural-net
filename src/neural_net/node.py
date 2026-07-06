@@ -6,18 +6,19 @@ from .utils import topological_sort
 
 if TYPE_CHECKING:
     from .layer import Layer
+    from .loss_function import LossFunction
 
 
 class Node:
     def __init__(
         self,
         data: np.ndarray,
-        creator: Layer | None = None,
+        creator: Layer | LossFunction | None = None,
         parents: list[Node] | None = None,
         requires_grad: bool = True,
     ) -> None:
         self.data: np.ndarray = data
-        self.creator: Layer | None = creator
+        self.creator: Layer | LossFunction | None = creator
         self.parents: list[Node] = parents if parents is not None else []
         self.requires_grad: bool = requires_grad
         self.grad: np.ndarray | None = None
