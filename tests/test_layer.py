@@ -36,7 +36,7 @@ def test_linear_call(linear: Linear):
         out_node.data,
         linear.forward(X_in_node.data, linear.W_node.data, linear.b_node.data),
     )
-    assert out_node.requires_grad is True
+    assert out_node.requires_grad
 
 
 def test_linear_call_requires_grad_propagation(linear: Linear):
@@ -44,7 +44,7 @@ def test_linear_call_requires_grad_propagation(linear: Linear):
 
     out_node = linear(X_in_node)
     assert out_node is not None
-    assert out_node.requires_grad is True
+    assert out_node.requires_grad
 
 
 def test_linear_forward(linear: Linear):
