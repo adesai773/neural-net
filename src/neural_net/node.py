@@ -10,6 +10,9 @@ if TYPE_CHECKING:
 
 
 class Node:
+    # To prevent incorrect decomposition of numpy arrays for radd
+    __array_ufunc__ = None
+
     def __init__(
         self,
         data: np.ndarray,
@@ -22,6 +25,17 @@ class Node:
         self.parents: list[Node] = parents if parents is not None else []
         self.requires_grad: bool = requires_grad
         self.grad: np.ndarray | None = None
+
+    def __add__(self, other: Node | np.ndarray) -> Node:
+        if not isinstance(other, Node):
+            other = Node(other, requires_grad=False)
+
+        from .layer import Add
+
+        return Add()(self, other)
+
+    def __radd__(self, other: Node | np.ndarray) -> Node:
+        return self.__add__(other)
 
     def accumulate_grad(self, dg: np.ndarray) -> None:
         if self.grad is None:

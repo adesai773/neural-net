@@ -40,6 +40,32 @@ class Layer(ABC):
         return "Layer()"
 
 
+class Add(Layer):
+    def __init__(self) -> None:
+        pass
+
+    def forward(self, *node_data: np.ndarray) -> np.ndarray:
+        assert node_data, "Need to have nonzero number of node_data"
+
+        unique_shapes = {data.shape for data in node_data}
+        assert len(unique_shapes) == 1, "All node_data must have the same shape"
+
+        return np.sum(node_data, axis=0)
+
+    def backward(
+        self, upstream_grad: np.ndarray, parents: list[Node]
+    ) -> list[np.ndarray | None]:
+        # Y = (I) x A + (I) x B
+        # dL/dA = dY/dA x dL/dY = I.T * dL/dY = I x upstream_grad = upstream_grad
+
+        assert len(parents) > 0
+        unique_shapes = {parent.data.shape for parent in parents}
+        assert len(unique_shapes) == 1, "All node_data must have the same shape"
+        assert upstream_grad.shape == parents[0].data.shape
+
+        return [upstream_grad] * len(parents)
+
+
 class Linear(Layer):
     def __init__(
         self, in_features: int, out_features: int, seed: int | None = None

@@ -11,6 +11,34 @@ def node() -> Node:
     return Node(np.array(0))
 
 
+def test_node_add():
+    node_1 = Node(np.array([1, 2]))
+    node_2 = Node(np.array([2, 3]))
+
+    sum_node = node_1 + node_2
+    assert isinstance(sum_node, Node)
+    assert np.array_equal(sum_node.data, np.array([3, 5]))
+    assert sum_node.requires_grad
+
+
+def test_node_add_with_nparray():
+    node_1 = Node(np.array([1, 2]), requires_grad=False)
+
+    sum_node = node_1 + np.array([2, 3])
+    assert isinstance(sum_node, Node)
+    assert np.array_equal(sum_node.data, np.array([3, 5]))
+    assert not sum_node.requires_grad
+
+
+def test_node_radd_with_nparray():
+    node_1 = Node(np.array([1, 2]), requires_grad=False)
+
+    sum_node = np.array([2, 3]) + node_1
+    assert isinstance(sum_node, Node)
+    assert np.array_equal(sum_node.data, np.array([3, 5]))
+    assert not sum_node.requires_grad
+
+
 def test_node_accumulate_grad(node: Node):
     node.accumulate_grad(np.array(1))
     assert node.grad is not None

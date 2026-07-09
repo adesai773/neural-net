@@ -1,13 +1,58 @@
 import numpy as np
 import pytest
 
-from neural_net.layer import Linear
+from neural_net.layer import Add, Linear
 from neural_net.node import Node
 
 
 @pytest.fixture
 def linear() -> Linear:
     return Linear(3, 2)
+
+
+@pytest.fixture
+def add() -> Add:
+    return Add()
+
+
+def test_add_call(add: Add):
+    A_node = Node(np.array([1, 2, 3]))
+    B_node = Node(np.array([-1, 0, 1]))
+
+    Y_node = add(A_node, B_node)
+    assert Y_node is not None
+    assert Y_node.creator is add
+    assert Y_node.parents == [A_node, B_node]
+    assert np.array_equal(
+        Y_node.data,
+        add.forward(A_node.data, B_node.data),
+    )
+    assert Y_node.requires_grad
+
+
+def test_add_forward(add: Add):
+    A = np.array([1, 2, 3])
+    B = np.array([0, 0, 1])
+    C = np.array([1, 0, 0])
+
+    assert np.array_equal(add.forward(A, B, C), np.array([2, 2, 4]))
+
+
+def test_add_backward(add: Add):
+    A = np.array([1, 2, 3])
+    B = np.array([0, 0, 1])
+    C = np.array([1, 0, 0])
+
+    parents = [Node(A), Node(B), Node(C)]
+    grads = add.backward(upstream_grad=np.array([10, 20, 40]), parents=parents)
+
+    assert len(grads) == 3
+    assert grads[0] is not None
+    assert np.array_equal(grads[0].data, np.array([10, 20, 40]))
+    assert grads[1] is not None
+    assert np.array_equal(grads[1].data, np.array([10, 20, 40]))
+    assert grads[2] is not None
+    assert np.array_equal(grads[2].data, np.array([10, 20, 40]))
 
 
 def test_linear_rng_seed():
