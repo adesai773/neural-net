@@ -54,6 +54,13 @@ class Node:
         self.grad = gradient
 
         topologically_sorted_nodes = topological_sort(self)
+
+        # Reset non-leaf nodes' grads to avoid compounding across backward calls
+        # (i.e. if you didn't call Optimizer.zero_grad() between calls)
+        for node in topologically_sorted_nodes:
+            if node.creator is not None and node is not self:
+                node.grad = None
+
         for node in reversed(topologically_sorted_nodes):
             if node.creator is None or node.grad is None:
                 continue

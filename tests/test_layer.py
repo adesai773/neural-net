@@ -48,11 +48,11 @@ def test_add_backward(add: Add):
 
     assert len(grads) == 3
     assert grads[0] is not None
-    assert np.array_equal(grads[0].data, np.array([10, 20, 40]))
+    assert np.array_equal(grads[0], np.array([10, 20, 40]))
     assert grads[1] is not None
-    assert np.array_equal(grads[1].data, np.array([10, 20, 40]))
+    assert np.array_equal(grads[1], np.array([10, 20, 40]))
     assert grads[2] is not None
-    assert np.array_equal(grads[2].data, np.array([10, 20, 40]))
+    assert np.array_equal(grads[2], np.array([10, 20, 40]))
 
 
 def test_linear_rng_seed():

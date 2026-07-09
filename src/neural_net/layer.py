@@ -41,9 +41,6 @@ class Layer(ABC):
 
 
 class Add(Layer):
-    def __init__(self) -> None:
-        pass
-
     def forward(self, *node_data: np.ndarray) -> np.ndarray:
         assert node_data, "Need to have nonzero number of node_data"
 
@@ -63,7 +60,9 @@ class Add(Layer):
         assert len(unique_shapes) == 1, "All node_data must have the same shape"
         assert upstream_grad.shape == parents[0].data.shape
 
-        return [upstream_grad] * len(parents)
+        # Need to return a copy of upstream_grad since we want the
+        # upstream/downstream grads to point to different memory addresses
+        return [upstream_grad.copy() for _ in parents]
 
 
 class Linear(Layer):

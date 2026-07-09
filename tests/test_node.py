@@ -91,6 +91,6 @@ def test_node_backward_twice_without_zero_grad(node: Node):
     assert linear.b_node.grad is not None
     assert x.grad is None
 
-    assert np.array_equal(y_pred.grad, np.array([[20, 26]]))
-    assert np.array_equal(linear.W_node.grad, np.array([[30, 39], [30, 39], [30, 39]]))
-    assert np.array_equal(linear.b_node.grad, np.array([30, 39]))
+    assert np.array_equal(y_pred.grad, np.array([[10, 13]]))
+    assert np.array_equal(linear.W_node.grad, np.array([[20, 26], [20, 26], [20, 26]]))
+    assert np.array_equal(linear.b_node.grad, np.array([20, 26]))
