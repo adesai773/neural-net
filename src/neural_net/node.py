@@ -51,6 +51,8 @@ class Node:
         if gradient is None:
             assert self.data.size == 1, "Default gradient only works for scalar outputs"
             gradient = np.ones_like(self.data)
+        else:
+            assert gradient.shape == self.data.shape
         self.grad = gradient
 
         topologically_sorted_nodes = topological_sort(self)

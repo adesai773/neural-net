@@ -129,5 +129,18 @@ def test_linear_backward(linear: Linear):
     assert np.array_equal(dL_db, np.array([1, 2]))
 
 
+def test_linear_backward_bias_sums_across_batch_dim(linear: Linear):
+    linear.W_node.data = np.array([[1, 2], [3, 4], [5, 6]])
+    linear.b_node.data = np.array([1, 1])
+
+    X_in_node = Node(np.array([[1, 1, 1], [1, 1, 1]]))
+    parents = [X_in_node, linear.W_node, linear.b_node]
+
+    grads = linear.backward(np.array([[1, 2], [4, 4]]), parents)
+    _, _, dL_db = grads
+
+    assert np.array_equal(dL_db, np.array([5, 6]))
+
+
 def test_linear_parameters(linear: Linear):
     assert linear.parameters() == [linear.W_node, linear.b_node]

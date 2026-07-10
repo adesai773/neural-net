@@ -10,9 +10,6 @@ class Activation(Layer):
 
 
 class ReLU(Activation):
-    def __init__(self) -> None:
-        pass
-
     def forward(self, X_in: np.ndarray) -> np.ndarray:
         return np.maximum(X_in, 0)
 
@@ -25,6 +22,7 @@ class ReLU(Activation):
 
         downstream_grad = upstream_grad.copy()
         downstream_grad[X <= 0] = 0
+
         return [downstream_grad]
 
     def __str__(self) -> str:
