@@ -287,4 +287,59 @@ def test_node_backward_explicit_gradient_argument():
 
 
 def test_numerical_gradient_check():
-    pass
+    epsilon = 1e-5
+
+    linear = Linear(2, 2, seed=42)
+    x = Node(np.random.default_rng(0).standard_normal((1, 2)), requires_grad=False)
+    y_true = np.random.default_rng(1).standard_normal((1, 2))
+
+    # Analytical gradient
+    y_pred = linear(x)
+    loss = MseLoss()(y_pred, y_true)
+    loss.backward()
+
+    assert linear.W_node.grad is not None
+    assert linear.b_node.grad is not None
+    analytical_W = linear.W_node.grad.copy()
+    analytical_b = linear.b_node.grad.copy()
+
+    # Numerical gradient
+    def compute_loss_value():
+        y = linear(x)
+        L = MseLoss()(y, y_true)
+        return float(L.data)
+
+    numerical_W = np.zeros_like(linear.W_node.data)
+    for i in range(linear.W_node.data.shape[0]):
+        for j in range(linear.W_node.data.shape[1]):
+            original = linear.W_node.data[i, j]
+
+            linear.W_node.data[i, j] = original + epsilon
+            L_plus = compute_loss_value()
+
+            linear.W_node.data[i, j] = original - epsilon
+            L_minus = compute_loss_value()
+
+            linear.W_node.data[i, j] = original
+
+            numerical_W[i, j] = (L_plus - L_minus) / (2 * epsilon)
+    assert np.allclose(analytical_W, numerical_W, atol=1e-5, rtol=1e-3), (
+        f"Analytic grad doesn't match numerical for W -- analytic: {analytical_W}, numerical: {numerical_W}"
+    )
+
+    numerical_b = np.zeros_like(linear.b_node.data)
+    for i in range(linear.b_node.data.shape[0]):
+        original = linear.b_node.data[i]
+
+        linear.b_node.data[i] = original + epsilon
+        L_plus = compute_loss_value()
+
+        linear.b_node.data[i] = original - epsilon
+        L_minus = compute_loss_value()
+
+        linear.b_node.data[i] = original
+
+        numerical_b[i] = (L_plus - L_minus) / (2 * epsilon)
+    assert np.allclose(analytical_b, numerical_b, atol=1e-5, rtol=1e-3), (
+        f"Analytic grad doesn't match numerical for b -- analytic: {analytical_b}, numerical: {numerical_b}"
+    )
