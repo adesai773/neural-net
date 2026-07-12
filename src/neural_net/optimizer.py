@@ -9,8 +9,8 @@ class Optimizer(ABC):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        # Automatically register any subclass by its name (e.g., SgdOptimizer -> sgd)
-        name = cls.__name__.lower().replace("optimizer", "")
+        # Automatically register any subclass by its name (e.g., Sgd -> sgd)
+        name = cls.__name__.lower()
         Optimizer.REGISTRY[name] = cls
 
     def __init__(self, parameters: list[Node], learning_rate: float = 0.01) -> None:
@@ -18,7 +18,8 @@ class Optimizer(ABC):
         self.learning_rate: float = learning_rate
 
     def zero_grad(self) -> None:
-        pass
+        for param in self.parameters:
+            param.grad = None
 
     @abstractmethod
     def step(self) -> None:
@@ -28,9 +29,11 @@ class Optimizer(ABC):
         return "Optimizer()"
 
 
-class SgdOptimizer(Optimizer):
+class Sgd(Optimizer):
     def step(self) -> None:
-        pass
+        for param in self.parameters:
+            if param.grad is not None and param.requires_grad:
+                param.data -= self.learning_rate * param.grad
 
     def __str__(self) -> str:
-        return "SgdOptimizer()"
+        return "Sgd()"
