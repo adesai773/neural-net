@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "numpy>=2.4.4",
+    "tqdm>=4.68.4",
 ]
 
 [build-system]

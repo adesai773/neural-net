@@ -35,7 +35,7 @@ class LossFunction(ABC):
         return "LossFunction()"
 
 
-class MseLoss(LossFunction):
+class Mse(LossFunction):
     def compute_loss(self, y_pred: np.ndarray, y_true: np.ndarray) -> float:
         assert y_pred.shape == y_true.shape, (
             f"y_pred shape {y_pred.shape} needs to match y_true shape {y_true.shape}"
@@ -68,4 +68,4 @@ class MseLoss(LossFunction):
         return [dL_dy_pred, None]
 
     def __str__(self) -> str:
-        return "MseLoss()"
+        return "Mse()"

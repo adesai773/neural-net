@@ -1,16 +1,16 @@
 import numpy as np
 import pytest
 
-from neural_net.loss_function import MseLoss
+from neural_net.loss_function import Mse
 from neural_net.node import Node
 
 
 @pytest.fixture
-def mse_loss() -> MseLoss:
-    return MseLoss()
+def mse_loss() -> Mse:
+    return Mse()
 
 
-def test_mse_loss_call(mse_loss: MseLoss):
+def test_mse_loss_call(mse_loss: Mse):
     y_pred = np.array([[2, 2], [2, 4], [1, 1]])
     y_pred_node = Node(y_pred)
     y_true = np.zeros_like(y_pred)
@@ -25,7 +25,7 @@ def test_mse_loss_call(mse_loss: MseLoss):
     assert loss_node.requires_grad
 
 
-def test_mse_loss_call_with_true_node(mse_loss: MseLoss):
+def test_mse_loss_call_with_true_node(mse_loss: Mse):
     y_pred = np.array([[2, 2], [2, 4], [1, 1]])
     y_pred_node = Node(y_pred)
     y_true = np.zeros_like(y_pred)
@@ -39,7 +39,7 @@ def test_mse_loss_call_with_true_node(mse_loss: MseLoss):
     assert loss_node.requires_grad
 
 
-def test_mse_loss_call_with_require_grad_false(mse_loss: MseLoss):
+def test_mse_loss_call_with_require_grad_false(mse_loss: Mse):
     y_pred = np.array([[2, 2], [2, 4], [1, 1]])
     y_pred_node = Node(y_pred, requires_grad=False)
     y_true = np.zeros_like(y_pred)
@@ -53,21 +53,21 @@ def test_mse_loss_call_with_require_grad_false(mse_loss: MseLoss):
     assert not loss_node.requires_grad
 
 
-def test_mse_loss_compute_loss(mse_loss: MseLoss):
+def test_mse_loss_compute_loss(mse_loss: Mse):
     y_pred = np.array([[2, 2], [2, 4], [1, 1]])
     y_true = np.zeros_like(y_pred)
 
     assert mse_loss.compute_loss(y_pred, y_true) == 5
 
 
-def test_mse_loss_compute_loss_nonzero_y_true(mse_loss: MseLoss):
+def test_mse_loss_compute_loss_nonzero_y_true(mse_loss: Mse):
     y_pred = np.array([[4, 3], [9, 100], [1, 4]])
     y_true = np.array([[2, 1], [7, 104], [2, 5]])
 
     assert mse_loss.compute_loss(y_pred, y_true) == 5
 
 
-def test_mse_loss_backward(mse_loss: MseLoss):
+def test_mse_loss_backward(mse_loss: Mse):
     y_pred = np.array([[24, 24], [12, 48], [12, 12]])
     y_pred_node = Node(y_pred)
     y_true = np.zeros_like(y_pred)
@@ -82,7 +82,7 @@ def test_mse_loss_backward(mse_loss: MseLoss):
     assert downstream_grads[1] is None
 
 
-def test_mse_loss_backward_with_upstream_grad(mse_loss: MseLoss):
+def test_mse_loss_backward_with_upstream_grad(mse_loss: Mse):
     y_pred = np.array([[24, 24], [12, 48], [12, 12]])
     y_pred_node = Node(y_pred)
     y_true = np.zeros_like(y_pred)
@@ -97,7 +97,7 @@ def test_mse_loss_backward_with_upstream_grad(mse_loss: MseLoss):
     assert downstream_grads[1] is None
 
 
-def test_mse_loss_backward_with_nonzero_y_true(mse_loss: MseLoss):
+def test_mse_loss_backward_with_nonzero_y_true(mse_loss: Mse):
     y_pred = np.array([[24, 24], [12, 48], [12, 12]])
     y_pred_node = Node(y_pred)
     y_true = np.array([[24, 24], [12, 48], [6, 9]])

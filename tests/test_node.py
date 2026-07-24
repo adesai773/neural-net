@@ -3,7 +3,7 @@ import pytest
 
 from neural_net.activation import ReLU
 from neural_net.layer import Linear
-from neural_net.loss_function import MseLoss
+from neural_net.loss_function import Mse
 from neural_net.node import Node
 
 
@@ -59,7 +59,7 @@ def test_node_backward():
     y_true = np.array([[0, 0]])
 
     y_pred = linear(x)
-    loss = MseLoss()(y_pred, y_true)
+    loss = Mse()(y_pred, y_true)
     loss.backward()
 
     assert loss.grad is not None
@@ -83,7 +83,7 @@ def test_node_backward_twice_without_zero_grad():
     y_true = np.array([[0, 0]])
 
     y_pred = linear(x)
-    loss = MseLoss()(y_pred, y_true)
+    loss = Mse()(y_pred, y_true)
     loss.backward()
     loss.backward()
 
@@ -113,7 +113,7 @@ def test_node_backward_stacked_layers():
 
     out1 = linear1(x)
     y_pred = linear2(out1)
-    loss = MseLoss()(y_pred, y_true)
+    loss = Mse()(y_pred, y_true)
 
     loss.backward()
 
@@ -158,7 +158,7 @@ def test_node_backward_with_activation():
     linear1_out = linear1(x)
     relu_out = relu(linear1_out)
     y_pred = linear2(relu_out)
-    loss = MseLoss()(y_pred, y_true)
+    loss = Mse()(y_pred, y_true)
 
     loss.backward()
 
@@ -295,7 +295,7 @@ def test_numerical_gradient_check():
 
     # Analytical gradient
     y_pred = linear(x)
-    loss = MseLoss()(y_pred, y_true)
+    loss = Mse()(y_pred, y_true)
     loss.backward()
 
     assert linear.W_node.grad is not None
@@ -306,7 +306,7 @@ def test_numerical_gradient_check():
     # Numerical gradient
     def compute_loss_value():
         y = linear(x)
-        L = MseLoss()(y, y_true)
+        L = Mse()(y, y_true)
         return float(L.data)
 
     numerical_W = np.zeros_like(linear.W_node.data)
