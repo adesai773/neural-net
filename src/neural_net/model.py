@@ -89,7 +89,7 @@ class Model(ABC):
             f"Need 1 LossFunction per output Node, current {len(loss)} LossFunctions, but {len(y_true)} expected output nodes"
         )
         # Check if forward pass's output shape matches ground truth samples' shapes
-        for i, (yp, yt) in enumerate(zip(y_probe, y_true)):
+        for i, (yp, yt) in enumerate(zip(y_probe, y_true, strict=True)):
             assert yp.data.shape[1:] == yt.shape[1:], (
                 f"Output {i} shape {yp.data.shape[1:]} doesn't match target shape {yt.shape[1:]}"
             )
@@ -122,7 +122,7 @@ class Model(ABC):
                 # Compute per-output loss
                 loss_nodes: list[Node] = []
                 for prediction, ground_truth, loss_func in zip(
-                    y_pred, y_true_batch, loss
+                    y_pred, y_true_batch, loss, strict=True
                 ):
                     loss_nodes.append(loss_func(prediction, ground_truth))
 

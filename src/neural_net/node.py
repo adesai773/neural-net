@@ -72,7 +72,7 @@ class Node:
             )
             assert len(downstream_grads) == len(node.parents)
 
-            for parent_grad, parent in zip(downstream_grads, node.parents):
+            for parent_grad, parent in zip(downstream_grads, node.parents, strict=True):
                 if not parent.requires_grad or parent_grad is None:
                     continue
 

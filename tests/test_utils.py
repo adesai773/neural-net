@@ -129,7 +129,7 @@ def test_topological_sort_many_parents():
     parents = [Node(np.array(0)) for _ in range(10)]
     root = Node(np.array(0), parents=parents)
 
-    expected = parents + [root]
+    expected = [*parents, root]
     assert topological_sort(root) == expected
 
 

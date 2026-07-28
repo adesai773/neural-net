@@ -124,6 +124,7 @@ def test_linear_backward(linear: Linear):
     grads = linear.backward(np.array([[1, 2]]), parents)
     dL_dX, dL_dW, dL_db = grads
 
+    assert dL_dX is not None and dL_dW is not None and dL_db is not None
     assert np.array_equal(dL_dX, np.array([[5, 11, 17]]))
     assert np.array_equal(dL_dW, np.array([[1, 2], [1, 2], [1, 2]]))
     assert np.array_equal(dL_db, np.array([1, 2]))
@@ -139,6 +140,7 @@ def test_linear_backward_bias_sums_across_batch_dim(linear: Linear):
     grads = linear.backward(np.array([[1, 2], [4, 4]]), parents)
     _, _, dL_db = grads
 
+    assert dL_db is not None
     assert np.array_equal(dL_db, np.array([5, 6]))
 
 
