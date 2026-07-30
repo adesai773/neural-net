@@ -1,3 +1,4 @@
+import textwrap
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -141,7 +142,7 @@ class Model(ABC):
                 optimizer.step()
 
             epoch_avg_losses[-1] /= batch_count
-            pbar.set_postfix({"loss": f"{epoch_avg_losses[-1]:.4f}"})  # type: ignore[reportUnknownArgumentType]
+            pbar.set_postfix({"loss": f"{epoch_avg_losses[-1]:.5f}"})  # type: ignore[reportUnknownArgumentType]
 
         return epoch_avg_losses
 
@@ -154,4 +155,16 @@ class Model(ABC):
         raise NotImplementedError("Users must subclass Model and define graph.")
 
     def __str__(self) -> str:
-        return "Model()"
+        layer_strs = []
+        for layer in vars(self).values():
+            if hasattr(layer, "forward"):
+                layer_strs.append(str(layer))
+
+        class_name = type(self).__name__
+        if not layer_strs:
+            return f"{class_name}()"
+
+        joined_layers = "\n".join(layer_strs)
+        indented_layers = textwrap.indent(joined_layers, "  ")
+
+        return f"{class_name}(\n{indented_layers}\n)"

@@ -67,7 +67,10 @@ class Add(Layer):
 
 class Linear(Layer):
     def __init__(
-        self, in_features: int, out_features: int, seed: int | None = None
+        self,
+        in_features: int,
+        out_features: int,
+        seed: int | np.random.Generator | None = None,
     ) -> None:
         self._rng = np.random.default_rng(seed)
 
@@ -77,7 +80,8 @@ class Linear(Layer):
             data=self._rng.standard_normal((in_features, out_features)) * scale
         )
         # dimensions: out_features
-        self.b_node: Node = Node(data=np.zeros(out_features))
+        # Note: Small positive bias keeps ReLUs from starting in the dead-zone
+        self.b_node: Node = Node(data=np.full(out_features, 0.01))
 
     def forward(self, X_in: np.ndarray, W: np.ndarray, b: np.ndarray) -> np.ndarray:
         assert X_in.ndim == 2, (
@@ -137,4 +141,6 @@ class Linear(Layer):
         return [self.W_node, self.b_node]
 
     def __str__(self) -> str:
-        return "Linear()"
+        return (
+            f"Linear(in={self.W_node.data.shape[0]}, out={self.W_node.data.shape[1]})"
+        )
