@@ -1,13 +1,29 @@
 [project]
 name = "neural-net"
 version = "0.1.0"
-description = "Add your description here"
+description = "A tiny neural network library built from scratch in NumPy — for learning how autograd, backprop, and optimizers actually work."
 readme = "README.md"
 requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Anant Desai", email = "adesai773@gmail.com" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Education",
+]
 dependencies = [
     "numpy>=2.4.4",
     "tqdm>=4.68.4",
 ]
+
+[project.urls]
+Repository = "https://github.com/adesai773/neural-net"
+Issues = "https://github.com/adesai773/neural-net/issues"
 
 [build-system]
 requires = ["hatchling"]
