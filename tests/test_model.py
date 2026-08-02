@@ -105,6 +105,25 @@ def test_model_parameters_non_linear(my_non_linear_model: MyNonLinearModel):
     assert my_non_linear_model.parameters() == expected_params
 
 
+def test_model_parameters_list():
+    class MyModel(Model):
+        def __init__(self):
+            self.layers = [Linear(2, 3, seed=42), Linear(2, 3, seed=42)]
+
+        def forward(self, x: Node) -> Node | list[Node]:
+            return x
+
+    model = MyModel()
+    expected_params = [
+        model.layers[0].W_node,
+        model.layers[0].b_node,
+        model.layers[1].W_node,
+        model.layers[1].b_node,
+    ]
+
+    assert model.parameters() == expected_params
+
+
 def test_model_call_wraps_ndarray(my_simple_model: MySimpleModel):
     out_nodes = my_simple_model(np.array(0))
 

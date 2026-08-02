@@ -16,7 +16,6 @@ class MyRegressionModel(Model):
     ):
         rng = np.random.default_rng(seed)
         child_rngs = rng.spawn(2)
-        self._hidden_dim = hidden_dim
 
         self.linear1 = Linear(1, hidden_dim, seed=child_rngs[0])
         self.relu = ReLU()

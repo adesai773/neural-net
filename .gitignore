@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# profiling 
+*.prof
+*.svg
+benchmarks/output/

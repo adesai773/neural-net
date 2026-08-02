@@ -23,9 +23,15 @@ class Model(ABC):
 
     def parameters(self) -> list[Node]:
         all_params: list[Node] = []
-        for layer in vars(self).values():
-            if hasattr(layer, "parameters"):
-                all_params.extend(layer.parameters())
+
+        for attr in vars(self).values():
+            if isinstance(attr, list):
+                for item in attr:
+                    if hasattr(item, "parameters"):
+                        all_params.extend(item.parameters())
+            else:
+                if hasattr(attr, "parameters"):
+                    all_params.extend(attr.parameters())
 
         return all_params
 
@@ -156,9 +162,15 @@ class Model(ABC):
 
     def __str__(self) -> str:
         layer_strs = []
-        for layer in vars(self).values():
-            if hasattr(layer, "forward"):
-                layer_strs.append(str(layer))
+
+        for attr in vars(self).values():
+            if isinstance(attr, list):
+                for item in attr:
+                    if hasattr(item, "forward"):
+                        layer_strs.append(str(item))
+            else:
+                if hasattr(attr, "forward"):
+                    layer_strs.append(str(attr))
 
         class_name = type(self).__name__
         if not layer_strs:
