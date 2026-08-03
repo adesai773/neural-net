@@ -1,5 +1,5 @@
 [project]
-name = "neural-net"
+name = "neural-net-from-scratch"
 version = "0.1.0"
 description = "A tiny neural network library built from scratch in NumPy — for learning how autograd, backprop, and optimizers actually work."
 readme = "README.md"

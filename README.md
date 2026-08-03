@@ -1,8 +1,8 @@
-# neural-net
+# neural-net-from-scratch
 
-[![PyPI](https://img.shields.io/pypi/v/neural-net.svg)](https://pypi.org/project/neural-net/)
-[![Python](https://img.shields.io/pypi/pyversions/neural-net.svg)](https://pypi.org/project/neural-net/)
-[![License](https://img.shields.io/pypi/l/neural-net.svg)](https://github.com/adesai773/neural-net/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/neural-net-from-scratch.svg)](https://pypi.org/project/neural-net-from-scratch/)
+[![Python](https://img.shields.io/pypi/pyversions/neural-net-from-scratch.svg)](https://pypi.org/project/neural-net-from-scratch/)
+[![License](https://img.shields.io/pypi/l/neural-net-from-scratch.svg)](https://github.com/adesai773/neural-net/blob/main/LICENSE)
 
 A tiny neural network library built from scratch in NumPy.
 
@@ -19,19 +19,19 @@ Requires Python 3.14+.
 ### Library use (in a project)
 
 ```bash
-uv add neural-net
+uv add neural-net-from-scratch
 ```
 
 Or with the demo example included:
 
 ```bash
-uv add "neural-net[examples]"
+uv add "neural-net-from-scratch[examples]"
 ```
 
 ### Try the demo (no project needed)
 
 ```bash
-uvx --from "neural-net[examples]" nn-regression-1d
+uvx --from "neural-net-from-scratch[examples]" nn-regression-1d
 ```
 
 `uvx` grabs the package into an ephemeral environment, runs the demo, and cleans up after itself.
