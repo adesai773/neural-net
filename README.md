@@ -1,8 +1,8 @@
 # neural-net-from-scratch
 
-[![PyPI](https://img.shields.io/pypi/v/neural-net-from-scratch.svg?v=1)](https://pypi.org/project/neural-net-from-scratch/)
-[![Python](https://img.shields.io/pypi/pyversions/neural-net-from-scratch.svg?v=1)](https://pypi.org/project/neural-net-from-scratch/)
-[![License](https://img.shields.io/pypi/l/neural-net-from-scratch.svg?v=1)](https://github.com/adesai773/neural-net/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/neural-net-from-scratch.svg?v=2)](https://pypi.org/project/neural-net-from-scratch/)
+[![Python](https://img.shields.io/pypi/pyversions/neural-net-from-scratch.svg?v=2)](https://pypi.org/project/neural-net-from-scratch/)
+[![License](https://img.shields.io/pypi/l/neural-net-from-scratch.svg?v=2)](https://github.com/adesai773/neural-net/blob/main/LICENSE)
 
 A tiny neural network library built from scratch in NumPy.
 
