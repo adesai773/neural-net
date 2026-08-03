@@ -8,6 +8,7 @@ from neural_net.layer import Linear
 from neural_net.loss_function import Mse
 from neural_net.model import Model
 from neural_net.node import Node
+from neural_net.optimizer import Sgd
 
 
 class MySimpleModel(Model):
@@ -214,10 +215,9 @@ def test_model_train_reduces_loss(
         X,
         y,
         loss=Mse(),
-        optimizer_key="sgd",
+        optimizer=Sgd(my_non_linear_model.parameters(), learning_rate=0.01),
         num_epochs=n_epochs,
         batch_size=batch_size,
-        learning_rate=0.01,
         shuffle=shuffle,
         seed=rng,
     )
@@ -248,10 +248,9 @@ def test_model_train_seed():
         X,
         y,
         loss=Mse(),
-        optimizer_key="sgd",
+        optimizer=Sgd(model_1.parameters(), learning_rate=0.01),
         num_epochs=n_epochs,
         batch_size=1,
-        learning_rate=0.01,
         shuffle=True,
         seed=10,
     )
@@ -259,10 +258,9 @@ def test_model_train_seed():
         X,
         y,
         loss=Mse(),
-        optimizer_key="sgd",
+        optimizer=Sgd(model_2.parameters(), learning_rate=0.01),
         num_epochs=n_epochs,
         batch_size=1,
-        learning_rate=0.01,
         shuffle=True,
         seed=10,
     )
@@ -270,10 +268,9 @@ def test_model_train_seed():
         X,
         y,
         loss=Mse(),
-        optimizer_key="sgd",
+        optimizer=Sgd(model_3.parameters(), learning_rate=0.01),
         num_epochs=n_epochs,
         batch_size=1,
-        learning_rate=0.01,
         shuffle=True,
         seed=11,
     )
@@ -316,10 +313,9 @@ def test_model_train_with_multi_in_out(
         [X1, X2],
         [y1, y2],
         loss=[Mse(), Mse()],
-        optimizer_key="sgd",
+        optimizer=Sgd(my_multi_in_out_model.parameters(), learning_rate=0.01),
         num_epochs=n_epochs,
         batch_size=batch_size,
-        learning_rate=0.01,
         shuffle=False,
         seed=rng,
     )
@@ -348,6 +344,7 @@ def model_kwargs() -> dict[str, Any]:
         "x_train": np.zeros((4, 2)),
         "y_true": np.zeros((4, 1)),
         "loss": Mse(),
+        "optimizer": Sgd([]),
         "num_epochs": 1,
     }
 
@@ -355,7 +352,6 @@ def model_kwargs() -> dict[str, Any]:
 @pytest.mark.parametrize(
     "overrides",
     [
-        pytest.param({"optimizer_key": "not_a_real_optimizer"}, id="unknown_optimizer"),
         pytest.param({"num_epochs": 0}, id="zero_epochs"),
         pytest.param({"y_true": np.zeros(4)}, id="y_missing_batch_dim"),
         pytest.param({"loss": [Mse(), Mse()]}, id="too_many_losses"),
@@ -363,7 +359,6 @@ def model_kwargs() -> dict[str, Any]:
         pytest.param({"x_train": []}, id="empty_input"),
         pytest.param({"y_true": []}, id="empty_output"),
         pytest.param({"batch_size": 0}, id="batch_size_0"),
-        pytest.param({"learning_rate": 0.0}, id="learning_rate_0"),
         pytest.param({"x_train": np.zeros(4)}, id="x_without_batch_dim"),
         pytest.param({"y_true": np.zeros((3, 1))}, id="sample_count_mismatch"),
         pytest.param({"y_true": np.zeros((4, 2))}, id="output_shape_mismatch"),

@@ -195,8 +195,8 @@ wheels = [
 ]
 
 [[package]]
-name = "neural-net"
-version = "0.1.0"
+name = "neural-net-from-scratch"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },

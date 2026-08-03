@@ -6,6 +6,7 @@ from neural_net.layer import Linear
 from neural_net.loss_function import Mse
 from neural_net.model import Model
 from neural_net.node import Node
+from neural_net.optimizer import Sgd
 
 
 class MyRegressionModel(Model):
@@ -48,10 +49,9 @@ def main():
             x_train=X_train,
             y_true=y_true,
             loss=Mse(),
-            optimizer_key="sgd",
+            optimizer=Sgd(model.parameters(), learning_rate=0.04),
             num_epochs=3000,
             batch_size=40,
-            learning_rate=0.04,
             shuffle=True,
             seed=np.random.default_rng(7),  # fresh rng per model for fair comparison
         )

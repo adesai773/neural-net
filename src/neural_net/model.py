@@ -40,10 +40,9 @@ class Model(ABC):
         x_train: np.ndarray | list[np.ndarray],
         y_true: np.ndarray | list[np.ndarray],
         loss: LossFunction | list[LossFunction],
-        optimizer_key: str = "sgd",
+        optimizer: Optimizer,
         num_epochs: int = 5,
         batch_size: int | None = None,
-        learning_rate: float = 0.01,
         shuffle: bool = False,
         seed: int | np.random.Generator | None = None,
     ) -> list[float]:
@@ -54,18 +53,11 @@ class Model(ABC):
             assert len(y_true) > 0
         if isinstance(loss, list):
             assert len(loss) > 0
-        assert optimizer_key in Optimizer.REGISTRY
         assert num_epochs >= 1
         assert batch_size is None or batch_size >= 1
-        assert learning_rate > 0
 
         # rng for shuffling; deterministic when seed is provided
         rng = np.random.default_rng(seed)
-
-        # Optimizer setup
-        optimizer = Optimizer.REGISTRY[optimizer_key](
-            parameters=self.parameters(), learning_rate=learning_rate
-        )
 
         # Convert input/output/loss to list to standardize
         x_train = [x_train] if not isinstance(x_train, list) else x_train

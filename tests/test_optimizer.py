@@ -12,10 +12,6 @@ def sgd_optimizer() -> Sgd:
     return Sgd([param1, param2])
 
 
-def test_sgd_registry(sgd_optimizer: Sgd):
-    assert "sgd" in Sgd.REGISTRY
-
-
 def test_sgd_zero_grad(sgd_optimizer: Sgd):
     for param in sgd_optimizer.parameters:
         param.grad = np.array(5)
