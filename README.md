@@ -111,7 +111,7 @@ The flow when you train:
 4. The optimizer applies those gradients to your parameters.
 5. Repeat.
 
-That's it — no magic layers, no framework internals hiding anything. Read the source in [`src/neural_net/`](src/neural_net/) and you can trace every step.
+That's it! No magic layers, no framework internals hiding anything. Read the source in [`src/neural_net/`](src/neural_net/) and you can trace every step.
 
 ## License
 
