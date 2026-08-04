@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 from .node import Node
 
 
@@ -27,4 +29,27 @@ class Sgd(Optimizer):
                 param.data -= self.learning_rate * param.grad
 
     def __str__(self) -> str:
-        return "Sgd()"
+        return f"Sgd(learning_rate={self.learning_rate})"
+
+
+class Momentum(Optimizer):
+    def __init__(
+        self, parameters: list[Node], learning_rate: float = 0.01, momentum: float = 0.9
+    ) -> None:
+        super().__init__(parameters, learning_rate)
+        self.momentum = momentum
+        self.velocities: list[np.ndarray] = [np.zeros_like(p.data) for p in parameters]
+
+    def step(self) -> None:
+        for i, param in enumerate(self.parameters):
+            if param.grad is not None and param.requires_grad:
+                # Note: I'm using the EMA formulation of momentum here
+                # (as opposed to the "classical" heavy-ball formulation)
+                self.velocities[i] = (
+                    self.momentum * self.velocities[i]
+                    + (1 - self.momentum) * param.grad
+                )
+                param.data -= self.learning_rate * self.velocities[i]
+
+    def __str__(self) -> str:
+        return f"Momentum(learning_rate={self.learning_rate}, momentum={self.momentum})"

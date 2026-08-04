@@ -8,7 +8,7 @@ from neural_net.layer import Linear
 from neural_net.loss_function import Mse
 from neural_net.model import Model
 from neural_net.node import Node
-from neural_net.optimizer import Sgd
+from neural_net.optimizer import Momentum, Optimizer, Sgd
 
 
 class MySimpleModel(Model):
@@ -189,16 +189,25 @@ def assert_loss_reduced(epoch_losses: list[float], factor: float = 0.1) -> None:
 
 
 @pytest.mark.parametrize(
-    ("batch_size", "shuffle"),
+    ("optimizer_cls", "optimizer_kwargs", "batch_size", "shuffle"),
     [
-        pytest.param(None, False, id="full_batch"),
-        pytest.param(500, False, id="mini_batch"),
-        pytest.param(500, True, id="mini_batch_shuffled"),
-        pytest.param(600, False, id="ragged_last_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.02}, None, False, id="full_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.02}, 500, False, id="mini_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.02}, 500, True, id="mini_batch_shuffled"),
+        pytest.param(Sgd, {"learning_rate": 0.02}, 600, False, id="ragged_last_batch"),
+        pytest.param(
+            Momentum,
+            {"learning_rate": 0.02, "momentum": 0.9},
+            None,
+            False,
+            id="momentum",
+        ),
     ],
 )
 def test_model_train_reduces_loss(
     my_non_linear_model: MyNonLinearModel,
+    optimizer_cls: type[Optimizer],
+    optimizer_kwargs: dict[str, Any],
     batch_size: int | None,
     shuffle: bool,
 ):
@@ -210,12 +219,14 @@ def test_model_train_reduces_loss(
     coeffs = np.array([[2.0], [1.0]])
     y = X @ coeffs + 0.5
 
-    n_epochs = 5000
+    optimizer = optimizer_cls(my_non_linear_model.parameters(), **optimizer_kwargs)
+
+    n_epochs = 2000
     epoch_losses = my_non_linear_model.train(
         X,
         y,
         loss=Mse(),
-        optimizer=Sgd(my_non_linear_model.parameters(), learning_rate=0.01),
+        optimizer=optimizer,
         num_epochs=n_epochs,
         batch_size=batch_size,
         shuffle=shuffle,
@@ -308,12 +319,12 @@ def test_model_train_with_multi_in_out(
     y1 = X1 @ coeffs1 + 0.5
     y2 = X2 @ coeffs2 + 0.25
 
-    n_epochs = 5000
+    n_epochs = 2000
     epoch_losses = my_multi_in_out_model.train(
         [X1, X2],
         [y1, y2],
         loss=[Mse(), Mse()],
-        optimizer=Sgd(my_multi_in_out_model.parameters(), learning_rate=0.01),
+        optimizer=Sgd(my_multi_in_out_model.parameters(), learning_rate=0.02),
         num_epochs=n_epochs,
         batch_size=batch_size,
         shuffle=False,
