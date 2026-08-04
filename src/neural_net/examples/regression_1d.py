@@ -6,7 +6,7 @@ from neural_net.layer import Linear
 from neural_net.loss_function import Mse
 from neural_net.model import Model
 from neural_net.node import Node
-from neural_net.optimizer import Sgd
+from neural_net.optimizer import Momentum, Sgd
 
 
 class MyRegressionModel(Model):
@@ -32,46 +32,94 @@ class MyRegressionModel(Model):
 
 def main():
     rng = np.random.default_rng(7)
-    N = 500
+    N = 1000
     X_train = rng.uniform(0, 1, size=(N, 1))
-    y_true = X_train**2 + 1 + rng.normal(loc=0.0, scale=0.03, size=X_train.shape)
+    y_true = (
+        np.sin(2 * np.pi * X_train)
+        + 0.3 * np.sin(6 * np.pi * X_train)
+        + 1.5
+        + rng.normal(loc=0.0, scale=0.1, size=X_train.shape)
+    )
 
     X_test = np.linspace(0, 1, 100).reshape(-1, 1)
-    y_test = X_test**2 + 1
+    y_test = np.sin(2 * np.pi * X_test) + 0.3 * np.sin(6 * np.pi * X_test) + 1.5
 
-    hidden_dims = [4, 8, 32, 256]
+    hidden_dims = [8, 32, 128]
+    optimizers = [
+        ("SGD", lambda p: Sgd(p, learning_rate=0.02)),
+        ("Momentum", lambda p: Momentum(p, learning_rate=0.03, momentum=0.9)),
+    ]
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharex=True, sharey=True)
-    for ax, h in zip(axes.flat, hidden_dims, strict=True):
-        model = MyRegressionModel(hidden_dim=h, seed=42)
-        print(model)
-        losses = model.train(
-            x_train=X_train,
-            y_true=y_true,
-            loss=Mse(),
-            optimizer=Sgd(model.parameters(), learning_rate=0.04),
-            num_epochs=3000,
-            batch_size=40,
-            shuffle=True,
-            seed=np.random.default_rng(7),  # fresh rng per model for fair comparison
+    fig, axes = plt.subplots(
+        len(hidden_dims), len(optimizers), figsize=(14, 10), sharex=True, sharey=True
+    )
+
+    for row_idx, h in enumerate(hidden_dims):
+        for col_idx, (name, optimizer_factory) in enumerate(optimizers):
+            model = MyRegressionModel(hidden_dim=h, seed=42)
+            optimizer = optimizer_factory(model.parameters())
+            print(model)
+            print(optimizer)
+
+            losses = model.train(
+                x_train=X_train,
+                y_true=y_true,
+                loss=Mse(),
+                optimizer=optimizer,
+                num_epochs=1200,
+                batch_size=16,
+                shuffle=True,
+                seed=np.random.default_rng(
+                    7
+                ),  # fresh rng per model for fair comparison
+            )
+            y_pred = model.predict(X_test)[0]
+
+            ax = axes[row_idx, col_idx]
+            ax.scatter(
+                X_train, y_true, color="gray", alpha=0.3, s=8, label="Training data"
+            )
+            ax.plot(X_test, y_test, "k--", linewidth=1.5, label="Truth")
+            ax.plot(X_test, y_pred, color="crimson", linewidth=2, label="Prediction")
+
+            # Optimizer name as column header on the top row only
+            if row_idx == 0:
+                ax.set_title(name, fontsize=12)
+
+            # Per-cell final loss, tucked in the top-left corner
+            ax.text(
+                0.03,
+                0.97,
+                f"loss={losses[-1]:.4f}",
+                transform=ax.transAxes,
+                fontsize=9,
+                verticalalignment="top",
+                bbox={
+                    "facecolor": "white",
+                    "alpha": 0.7,
+                    "edgecolor": "none",
+                    "pad": 2,
+                },
+            )
+
+            ax.grid(True, linestyle=":", alpha=0.5)
+
+    # Hidden dim as row labels on the leftmost column
+    for row_idx, h in enumerate(hidden_dims):
+        axes[row_idx, 0].set_ylabel(
+            f"h={h}", rotation=0, labelpad=30, fontsize=11, fontweight="bold"
         )
-        y_pred = model.predict(X_test)[0]
 
-        ax.scatter(X_train, y_true, color="gray", alpha=0.3, s=8, label="Training data")
-        ax.plot(X_test, y_test, "k--", linewidth=1.5, label="Truth")
-        ax.plot(X_test, y_pred, color="crimson", linewidth=2, label="Prediction")
-        ax.set_title(f"hidden_dim={h}  (final loss={losses[-1]:.5f})")
-        ax.grid(True, linestyle=":", alpha=0.5)
-
-    # Single legend, single set of axis labels — cleaner than repeating on every subplot
-    axes[0, 0].legend(loc="upper left", fontsize=9)
-    for ax in axes[-1, :]:  # bottom row
+    # x labels only on bottom row
+    for ax in axes[-1, :]:
         ax.set_xlabel("x")
-    for ax in axes[:, 0]:  # left column
-        ax.set_ylabel("y")
 
-    fig.suptitle("Regression fit vs. hidden dimension", fontsize=14)
-    fig.tight_layout()
+    # Single shared legend below the grid — pulled from any subplot since all match
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=10, frameon=False)
+
+    fig.suptitle("Regression fit: hidden dim vs. optimizer", fontsize=14)
+    fig.tight_layout(rect=(0, 0.03, 1, 1))  # leave room at bottom for the legend
     plt.show()
 
 
