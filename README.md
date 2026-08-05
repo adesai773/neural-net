@@ -34,7 +34,7 @@ uv add "neural-net-from-scratch[examples]"
 uvx --from "neural-net-from-scratch[examples]" nn-regression-1d
 ```
 
-`uvx` grabs the package into an ephemeral environment, runs the demo, and cleans up after itself.
+Note: `uvx` grabs the package into an ephemeral environment, runs the demo, and cleans up after itself.
 
 ## Quickstart
 
@@ -90,7 +90,7 @@ Once you install with the `examples` extra, you get a CLI demo:
 uv run nn-regression-1d
 ```
 
-That runs a 1D regression sweep across a few hidden layer sizes (4, 8, 32, 256) and plots them side by side so you can see how capacity affects the fit. Source lives at [`src/neural_net/examples/regression_1d.py`](src/neural_net/examples/regression_1d.py) if you want to poke at it.
+That runs a 3×4 grid of 1D regression fits — three hidden-layer sizes (`8, 32, 128`) against four optimizers (`SGD, Momentum, RMSprop, Adam`) — on a non-linear target (`sin(2πx) + 0.3·sin(6πx) + x³ + 1.5`). Each cell shows the fit and final loss. Source lives at [`src/neural_net/examples/regression_1d.py`](src/neural_net/examples/regression_1d.py) if you want to poke at it.
 
 ## Core concepts
 
@@ -100,7 +100,7 @@ A quick tour of the building blocks:
 - **`Layer`** — a stateless-ish transformation with a `forward()` and a `backward()`. Calling one builds a new Node and hooks it into the graph. `Linear` and `Add` live here.
 - **`Activation`** — same as Layer, just semantically for non-parametric nonlinearities. `ReLU` lives here.
 - **`LossFunction`** — takes `(y_pred, y_true)`, returns a scalar Node you can call `.backward()` on. `Mse` is included.
-- **`Optimizer`** — walks the model's parameters and applies updates. `Sgd` is included; new optimizers auto-register themselves via `__init_subclass__`.
+- **`Optimizer`** — walks the model's parameters and applies updates. `Sgd`, `Momentum`, `RMSprop`, and `Adam` are all included. You construct one with `model.parameters()` and pass it to `train()`.
 - **`Model`** — subclass this, drop your layers into `__init__`, wire them in `forward()`. Get `parameters()`, `predict()`, and a full `train()` loop for free.
 
 The flow when you train:

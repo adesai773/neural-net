@@ -49,8 +49,8 @@ def main():
 
     hidden_dims = [8, 32, 128]
     optimizers = [
-        ("SGD", lambda p: Sgd(p, learning_rate=0.015)),
-        ("Momentum", lambda p: Momentum(p, learning_rate=0.03, momentum=0.9)),
+        ("SGD", lambda p: Sgd(p, learning_rate=0.02)),
+        ("Momentum", lambda p: Momentum(p, learning_rate=0.035, momentum=0.9)),
         (
             "RMSprop",
             lambda p: RMSprop(p, learning_rate=0.005, decay=0.99, epsilon=1e-8),
@@ -66,6 +66,8 @@ def main():
     fig, axes = plt.subplots(
         len(hidden_dims), len(optimizers), figsize=(18, 10), sharex=True, sharey=True
     )
+
+    row_final_losses: list[list[float]] = [[] for _ in hidden_dims]
 
     for row_idx, h in enumerate(hidden_dims):
         for col_idx, (name, optimizer_factory) in enumerate(optimizers):
@@ -88,6 +90,8 @@ def main():
             )
             y_pred = model.predict(X_test)[0]
 
+            row_final_losses[row_idx].append(losses[-1])
+
             ax = axes[row_idx, col_idx]
             ax.scatter(
                 X_train, y_true, color="gray", alpha=0.3, s=8, label="Training data"
@@ -99,23 +103,39 @@ def main():
             if row_idx == 0:
                 ax.set_title(name, fontsize=12)
 
-            # Per-cell final loss, tucked in the top-left corner
+            # Per-cell final loss, tucked in the top-left corner.
+            # Color-code by quality tier: green = near noise floor, yellow = OK, red = stuck.
+            loss_value = losses[-1]
+            if loss_value < 0.02:
+                bg_color = "#C8E6C9"  # light green
+            elif loss_value < 0.10:
+                bg_color = "#FFF9C4"  # light yellow
+            else:
+                bg_color = "#FFCDD2"  # light red
             ax.text(
                 0.03,
                 0.97,
-                f"loss={losses[-1]:.4f}",
+                f"loss={loss_value:.4f}",
                 transform=ax.transAxes,
                 fontsize=9,
                 verticalalignment="top",
                 bbox={
-                    "facecolor": "white",
-                    "alpha": 0.7,
+                    "facecolor": bg_color,
+                    "alpha": 0.85,
                     "edgecolor": "none",
                     "pad": 2,
                 },
             )
 
             ax.grid(True, linestyle=":", alpha=0.5)
+
+    # Highlight the best (lowest final loss) cell per row with a forest-green border
+    for row_idx, cell_losses in enumerate(row_final_losses):
+        best_col = int(np.argmin(cell_losses))
+        winner_ax = axes[row_idx, best_col]
+        for spine in winner_ax.spines.values():
+            spine.set_edgecolor("#2E7D32")
+            spine.set_linewidth(2.5)
 
     # Hidden dim as row labels on the leftmost column
     for row_idx, h in enumerate(hidden_dims):
