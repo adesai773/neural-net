@@ -6,7 +6,7 @@ from neural_net.layer import Linear
 from neural_net.loss_function import Mse
 from neural_net.model import Model
 from neural_net.node import Node
-from neural_net.optimizer import Momentum, Sgd
+from neural_net.optimizer import Momentum, RMSprop, Sgd
 
 
 class MyRegressionModel(Model):
@@ -37,17 +37,24 @@ def main():
     y_true = (
         np.sin(2 * np.pi * X_train)
         + 0.3 * np.sin(6 * np.pi * X_train)
+        + X_train**3
         + 1.5
         + rng.normal(loc=0.0, scale=0.1, size=X_train.shape)
     )
 
     X_test = np.linspace(0, 1, 100).reshape(-1, 1)
-    y_test = np.sin(2 * np.pi * X_test) + 0.3 * np.sin(6 * np.pi * X_test) + 1.5
+    y_test = (
+        np.sin(2 * np.pi * X_test) + 0.3 * np.sin(6 * np.pi * X_test) + X_test**3 + 1.5
+    )
 
     hidden_dims = [8, 32, 128]
     optimizers = [
-        ("SGD", lambda p: Sgd(p, learning_rate=0.02)),
+        ("SGD", lambda p: Sgd(p, learning_rate=0.015)),
         ("Momentum", lambda p: Momentum(p, learning_rate=0.03, momentum=0.9)),
+        (
+            "RMSprop",
+            lambda p: RMSprop(p, learning_rate=0.005, decay=0.99, epsilon=1e-8),
+        ),
     ]
 
     fig, axes = plt.subplots(
@@ -66,7 +73,7 @@ def main():
                 y_true=y_true,
                 loss=Mse(),
                 optimizer=optimizer,
-                num_epochs=1200,
+                num_epochs=800,
                 batch_size=16,
                 shuffle=True,
                 seed=np.random.default_rng(

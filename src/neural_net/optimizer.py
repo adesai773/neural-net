@@ -53,3 +53,37 @@ class Momentum(Optimizer):
 
     def __str__(self) -> str:
         return f"Momentum(learning_rate={self.learning_rate}, momentum={self.momentum})"
+
+
+class RMSprop(Optimizer):
+    def __init__(
+        self,
+        parameters: list[Node],
+        learning_rate: float = 0.01,
+        decay: float = 0.99,
+        epsilon: float = 1e-8,
+    ) -> None:
+        super().__init__(parameters, learning_rate)
+
+        self.decay = decay
+        self.epsilon = epsilon
+
+        self.squared_grad_ema: list[np.ndarray] = [
+            np.zeros_like(p.data) for p in parameters
+        ]
+
+    def step(self) -> None:
+        for i, param in enumerate(self.parameters):
+            if param.grad is not None and param.requires_grad:
+                self.squared_grad_ema[i] = (
+                    self.decay * self.squared_grad_ema[i]
+                    + (1 - self.decay) * param.grad**2
+                )
+                param.data -= (
+                    self.learning_rate
+                    * param.grad
+                    / (np.sqrt(self.squared_grad_ema[i]) + self.epsilon)
+                )
+
+    def __str__(self) -> str:
+        return f"RMSprop(learning_rate={self.learning_rate}, decay={self.decay}, epsilon={self.epsilon})"
