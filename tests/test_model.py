@@ -8,7 +8,7 @@ from neural_net.layer import Linear
 from neural_net.loss_function import Mse
 from neural_net.model import Model
 from neural_net.node import Node
-from neural_net.optimizer import Momentum, Optimizer, Sgd
+from neural_net.optimizer import Adam, Momentum, Optimizer, RMSprop, Sgd
 
 
 class MySimpleModel(Model):
@@ -201,6 +201,20 @@ def assert_loss_reduced(epoch_losses: list[float], factor: float = 0.1) -> None:
             None,
             False,
             id="momentum",
+        ),
+        pytest.param(
+            RMSprop,
+            {"learning_rate": 0.01, "decay": 0.99},
+            None,
+            False,
+            id="rmsprop",
+        ),
+        pytest.param(
+            Adam,
+            {"learning_rate": 0.01, "beta1": 0.9, "beta2": 0.999},
+            None,
+            False,
+            id="adam",
         ),
     ],
 )

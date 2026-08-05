@@ -6,7 +6,7 @@ from neural_net.layer import Linear
 from neural_net.loss_function import Mse
 from neural_net.model import Model
 from neural_net.node import Node
-from neural_net.optimizer import Momentum, RMSprop, Sgd
+from neural_net.optimizer import Adam, Momentum, RMSprop, Sgd
 
 
 class MyRegressionModel(Model):
@@ -55,10 +55,16 @@ def main():
             "RMSprop",
             lambda p: RMSprop(p, learning_rate=0.005, decay=0.99, epsilon=1e-8),
         ),
+        (
+            "Adam",
+            lambda p: Adam(
+                p, learning_rate=0.005, beta1=0.9, beta2=0.999, epsilon=1e-8
+            ),
+        ),
     ]
 
     fig, axes = plt.subplots(
-        len(hidden_dims), len(optimizers), figsize=(14, 10), sharex=True, sharey=True
+        len(hidden_dims), len(optimizers), figsize=(18, 10), sharex=True, sharey=True
     )
 
     for row_idx, h in enumerate(hidden_dims):
@@ -73,7 +79,7 @@ def main():
                 y_true=y_true,
                 loss=Mse(),
                 optimizer=optimizer,
-                num_epochs=800,
+                num_epochs=500,
                 batch_size=16,
                 shuffle=True,
                 seed=np.random.default_rng(

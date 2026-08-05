@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from neural_net.node import Node
-from neural_net.optimizer import Momentum, RMSprop, Sgd
+from neural_net.optimizer import Adam, Momentum, RMSprop, Sgd
 
 
 @pytest.fixture
@@ -24,6 +24,13 @@ def rmsprop_optimizer() -> RMSprop:
     param1 = Node(np.array(0))
     param2 = Node(np.array(0))
     return RMSprop([param1, param2])
+
+
+@pytest.fixture
+def adam_optimizer() -> Adam:
+    param1 = Node(np.array(0))
+    param2 = Node(np.array(0))
+    return Adam([param1, param2])
 
 
 def test_sgd_zero_grad(sgd_optimizer: Sgd):
@@ -272,3 +279,98 @@ def test_rmsprop_normalizes_across_grad_magnitudes(rmsprop_optimizer: RMSprop):
         param2.grad / np.sqrt(s2),
         atol=0.00000001,
     )
+
+
+def test_adam_zero_grad(adam_optimizer: Adam):
+    for param in adam_optimizer.parameters:
+        param.grad = np.array(5)
+
+    adam_optimizer.zero_grad()
+
+    for param in adam_optimizer.parameters:
+        assert param.grad is None
+
+
+def test_adam_step(adam_optimizer: Adam):
+    adam_optimizer.learning_rate = 1
+    adam_optimizer.beta1 = 0.9
+    adam_optimizer.beta2 = 0.999
+    adam_optimizer.epsilon = 0
+    for param in adam_optimizer.parameters:
+        param.data = np.array(10.0)
+        param.grad = np.array(4.0)
+
+    adam_optimizer.step()
+
+    for idx, param in enumerate(adam_optimizer.parameters):
+        np.testing.assert_allclose(adam_optimizer.m[idx], 0.4, atol=0.0000001)
+        np.testing.assert_allclose(adam_optimizer.v[idx], 0.016, atol=0.0000001)
+        np.testing.assert_allclose(param.data, 9, atol=0.000000001)
+
+
+def test_adam_step_skips_when_grad_is_none(adam_optimizer: Adam):
+    adam_optimizer.learning_rate = 1
+    adam_optimizer.beta1 = 0.9
+    adam_optimizer.beta2 = 0.999
+    adam_optimizer.epsilon = 0
+    assert len(adam_optimizer.parameters) == 2
+    param1 = adam_optimizer.parameters[0]
+    param1.data = np.array(10.0)
+    param1.grad = None
+    param1.requires_grad = True
+    param2 = adam_optimizer.parameters[1]
+    param2.data = np.array(10.0)
+    param2.grad = np.array(4.0)
+    param2.requires_grad = True
+
+    adam_optimizer.step()
+
+    assert np.array_equal(param1.data, np.array(10))  # unchanged
+    np.testing.assert_allclose(param2.data, 9, atol=0.001)
+
+
+def test_adam_step_skips_frozen_parameters(adam_optimizer: Adam):
+    adam_optimizer.learning_rate = 1
+    adam_optimizer.beta1 = 0.9
+    adam_optimizer.beta2 = 0.999
+    adam_optimizer.epsilon = 0
+    assert len(adam_optimizer.parameters) == 2
+    param1 = adam_optimizer.parameters[0]
+    param1.data = np.array(10.0)
+    param1.grad = np.array(4.0)
+    param1.requires_grad = False
+    param2 = adam_optimizer.parameters[1]
+    param2.data = np.array(10.0)
+    param2.grad = np.array(4.0)
+    param2.requires_grad = True
+
+    adam_optimizer.step()
+
+    assert np.array_equal(param1.data, np.array(10))  # unchanged
+    np.testing.assert_allclose(param2.data, 9, atol=0.001)
+
+
+def test_adam_state_accumulates(adam_optimizer: Adam):
+    adam_optimizer.learning_rate = 1
+    adam_optimizer.beta1 = 0.9
+    adam_optimizer.beta2 = 0.999
+    adam_optimizer.epsilon = 0
+    for param in adam_optimizer.parameters:
+        param.data = np.array(10.0)
+        param.grad = np.array(4.0)
+
+    adam_optimizer.step()
+
+    assert adam_optimizer.iteration == 1
+    for idx, param in enumerate(adam_optimizer.parameters):
+        np.testing.assert_allclose(adam_optimizer.m[idx], 0.4, atol=0.0000001)
+        np.testing.assert_allclose(adam_optimizer.v[idx], 0.016, atol=0.0000001)
+        np.testing.assert_allclose(param.data, 9, atol=0.000000001)
+
+    adam_optimizer.step()
+
+    assert adam_optimizer.iteration == 2
+    for idx, param in enumerate(adam_optimizer.parameters):
+        np.testing.assert_allclose(adam_optimizer.m[idx], 0.76, atol=0.0000001)
+        np.testing.assert_allclose(adam_optimizer.v[idx], 0.031984, atol=0.0000001)
+        np.testing.assert_allclose(param.data, 8, atol=0.0000001)
