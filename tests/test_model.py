@@ -5,7 +5,7 @@ import pytest
 
 from neural_net.activation import ReLU
 from neural_net.layer import Linear
-from neural_net.loss_function import Mse
+from neural_net.loss_function import BceWithLogits, Mse
 from neural_net.model import Model
 from neural_net.node import Node
 from neural_net.optimizer import Adam, Momentum, Optimizer, RMSprop, Sgd
@@ -32,15 +32,26 @@ class MyMultiOutputModel(Model):
         return [linear1_out, linear2_out]
 
 
-class MyNonLinearModel(Model):
+class MyLinearModel(Model):
     def __init__(self):
-        self.linear = Linear(2, 1, seed=42)
-        self.relu = ReLU()
+        self.linear1 = Linear(2, 1, seed=42)
 
     def forward(self, x: Node) -> Node | list[Node]:
-        linear1_out = self.linear(x)
+        linear1_out = self.linear1(x)
+        return linear1_out
+
+
+class MyNonLinearModel(Model):
+    def __init__(self):
+        self.linear1 = Linear(2, 8, seed=42)
+        self.relu = ReLU()
+        self.linear2 = Linear(8, 1, seed=43)
+
+    def forward(self, x: Node) -> Node | list[Node]:
+        linear1_out = self.linear1(x)
         relu_out = self.relu(linear1_out)
-        return relu_out
+        linear2_out = self.linear2(relu_out)
+        return linear2_out
 
 
 class MyMultiInOutModel(Model):
@@ -68,6 +79,11 @@ def my_multi_input_model() -> MyMultiInputModel:
 @pytest.fixture
 def my_multi_output_model() -> MyMultiOutputModel:
     return MyMultiOutputModel()
+
+
+@pytest.fixture
+def my_linear_model() -> MyLinearModel:
+    return MyLinearModel()
 
 
 @pytest.fixture
@@ -100,8 +116,10 @@ def test_model_parameters_multi_output(my_multi_output_model: MyMultiOutputModel
 
 def test_model_parameters_non_linear(my_non_linear_model: MyNonLinearModel):
     expected_params = [
-        my_non_linear_model.linear.W_node,
-        my_non_linear_model.linear.b_node,
+        my_non_linear_model.linear1.W_node,
+        my_non_linear_model.linear1.b_node,
+        my_non_linear_model.linear2.W_node,
+        my_non_linear_model.linear2.b_node,
     ]
     assert my_non_linear_model.parameters() == expected_params
 
@@ -191,13 +209,78 @@ def assert_loss_reduced(epoch_losses: list[float], factor: float = 0.1) -> None:
 @pytest.mark.parametrize(
     ("optimizer_cls", "optimizer_kwargs", "batch_size", "shuffle"),
     [
-        pytest.param(Sgd, {"learning_rate": 0.02}, None, False, id="full_batch"),
-        pytest.param(Sgd, {"learning_rate": 0.02}, 500, False, id="mini_batch"),
-        pytest.param(Sgd, {"learning_rate": 0.02}, 500, True, id="mini_batch_shuffled"),
-        pytest.param(Sgd, {"learning_rate": 0.02}, 600, False, id="ragged_last_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.03}, None, False, id="full_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.03}, 500, False, id="mini_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.03}, 500, True, id="mini_batch_shuffled"),
+        pytest.param(Sgd, {"learning_rate": 0.03}, 600, False, id="ragged_last_batch"),
         pytest.param(
             Momentum,
-            {"learning_rate": 0.02, "momentum": 0.9},
+            {"learning_rate": 0.03, "momentum": 0.9},
+            None,
+            False,
+            id="momentum",
+        ),
+        pytest.param(
+            RMSprop,
+            {"learning_rate": 0.02, "decay": 0.99},
+            None,
+            False,
+            id="rmsprop",
+        ),
+        pytest.param(
+            Adam,
+            {"learning_rate": 0.02, "beta1": 0.9, "beta2": 0.999},
+            None,
+            False,
+            id="adam",
+        ),
+    ],
+)
+def test_linear_model_train_regression_reduces_loss(
+    my_linear_model: MyLinearModel,
+    optimizer_cls: type[Optimizer],
+    optimizer_kwargs: dict[str, Any],
+    batch_size: int | None,
+    shuffle: bool,
+):
+    rng = np.random.default_rng(7)
+
+    N = 2000
+    X = rng.uniform(0, 1, size=(N, 2))
+
+    coeffs = np.array([[2.0], [1.0]])
+    y = X @ coeffs + 0.5
+
+    optimizer = optimizer_cls(my_linear_model.parameters(), **optimizer_kwargs)
+
+    n_epochs = 1000
+    epoch_losses = my_linear_model.train(
+        X,
+        y,
+        loss=Mse(),
+        optimizer=optimizer,
+        num_epochs=n_epochs,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        seed=rng,
+    )
+
+    assert len(epoch_losses) == n_epochs
+    assert_loss_reduced(epoch_losses)
+    np.testing.assert_allclose(my_linear_model.linear1.W_node.data, coeffs, atol=0.05)
+    np.testing.assert_allclose(my_linear_model.linear1.b_node.data, 0.5, atol=0.05)
+
+
+@pytest.mark.parametrize(
+    ("optimizer_cls", "optimizer_kwargs", "batch_size", "shuffle"),
+    [
+        pytest.param(Sgd, {"learning_rate": 0.03}, None, False, id="full_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.03}, 500, False, id="mini_batch"),
+        pytest.param(Sgd, {"learning_rate": 0.03}, 500, True, id="mini_batch_shuffled"),
+        pytest.param(Sgd, {"learning_rate": 0.03}, 600, False, id="ragged_last_batch"),
+        pytest.param(
+            Momentum,
+            {"learning_rate": 0.03, "momentum": 0.9},
             None,
             False,
             id="momentum",
@@ -218,7 +301,7 @@ def assert_loss_reduced(epoch_losses: list[float], factor: float = 0.1) -> None:
         ),
     ],
 )
-def test_model_train_reduces_loss(
+def test_non_linear_model_train_classification_reduces_loss(
     my_non_linear_model: MyNonLinearModel,
     optimizer_cls: type[Optimizer],
     optimizer_kwargs: dict[str, Any],
@@ -229,9 +312,12 @@ def test_model_train_reduces_loss(
 
     N = 2000
     X = rng.uniform(0, 1, size=(N, 2))
+    x1, x2 = X[:, 0], X[:, 1]
 
-    coeffs = np.array([[2.0], [1.0]])
-    y = X @ coeffs + 0.5
+    def condition(x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
+        return (x1 > 0.5) & (x2 > 0.5)
+
+    y = np.where(condition(x1, x2), 1, 0)[:, np.newaxis]
 
     optimizer = optimizer_cls(my_non_linear_model.parameters(), **optimizer_kwargs)
 
@@ -239,7 +325,7 @@ def test_model_train_reduces_loss(
     epoch_losses = my_non_linear_model.train(
         X,
         y,
-        loss=Mse(),
+        loss=BceWithLogits(),
         optimizer=optimizer,
         num_epochs=n_epochs,
         batch_size=batch_size,
@@ -247,20 +333,25 @@ def test_model_train_reduces_loss(
         seed=rng,
     )
 
+    X_test = rng.uniform(0, 1, size=(N, 2))
+    x1_test, x2_test = X_test[:, 0], X_test[:, 1]
+    y_true = np.where(condition(x1_test, x2_test), 1, 0)[:, np.newaxis]
+    y_pred_logits = my_non_linear_model.predict(X_test)[0]
+    y_pred = (y_pred_logits > 0).astype(int)
+
+    accuracy = np.mean(y_pred == y_true)
+
     assert len(epoch_losses) == n_epochs
-    assert_loss_reduced(epoch_losses)
-    np.testing.assert_allclose(
-        my_non_linear_model.linear.W_node.data, coeffs, atol=0.05
-    )
-    np.testing.assert_allclose(my_non_linear_model.linear.b_node.data, 0.5, atol=0.05)
+    assert_loss_reduced(epoch_losses, factor=0.4)
+    assert accuracy > 0.93, f"Accuracy expected to be >0.93, got {accuracy}"
 
 
 def test_model_train_seed():
     rng = np.random.default_rng(7)
 
-    model_1 = MyNonLinearModel()
-    model_2 = MyNonLinearModel()
-    model_3 = MyNonLinearModel()
+    model_1 = MyLinearModel()
+    model_2 = MyLinearModel()
+    model_3 = MyLinearModel()
 
     N = 200
     X = rng.uniform(0, 1, size=(N, 2))
@@ -302,10 +393,10 @@ def test_model_train_seed():
 
     assert epoch_losses_1 == epoch_losses_2
     np.testing.assert_array_equal(
-        model_1.linear.W_node.data, model_2.linear.W_node.data
+        model_1.linear1.W_node.data, model_2.linear1.W_node.data
     )
     np.testing.assert_array_equal(
-        model_1.linear.b_node.data, model_2.linear.b_node.data
+        model_1.linear1.b_node.data, model_2.linear1.b_node.data
     )
 
     assert epoch_losses_1 != epoch_losses_3
