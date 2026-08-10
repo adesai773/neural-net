@@ -92,6 +92,14 @@ uv run nn-regression-1d
 
 That runs a 3×4 grid of 1D regression fits — three hidden-layer sizes (`8, 32, 128`) against four optimizers (`SGD, Momentum, RMSprop, Adam`) — on a non-linear target (`sin(2πx) + 0.3·sin(6πx) + x³ + 1.5`). Each cell shows the fit and final loss. Source lives at [`src/neural_net/examples/regression_1d.py`](src/neural_net/examples/regression_1d.py) if you want to poke at it.
 
+There's also a binary classification demo:
+
+```bash
+uv run nn-classification-2d
+```
+
+That trains three MLPs (hidden sizes `8, 32, 128`) to classify 2D points into a multi-region target — a wavy horizontal stripe plus two isolated islands. Layout is a 2×3 grid: the top row shows training data colored by the model's predicted class, and the bottom row shows the learned probability surface as a heatmap with the true region boundary overlaid as a dashed line. Uses `BceWithLogits` loss and Adam. Source at [`src/neural_net/examples/classification_2d.py`](src/neural_net/examples/classification_2d.py).
+
 ## Core concepts
 
 A quick tour of the building blocks:
