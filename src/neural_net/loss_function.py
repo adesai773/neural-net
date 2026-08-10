@@ -13,7 +13,7 @@ class LossFunction(ABC):
         raw_pred = y_pred.data
         raw_true = y_true.data
 
-        raw_loss = self.compute_loss(raw_pred, raw_true)
+        raw_loss = self.forward(raw_pred, raw_true)
         return Node(
             np.array(raw_loss),
             creator=self,
@@ -22,7 +22,7 @@ class LossFunction(ABC):
         )
 
     @abstractmethod
-    def compute_loss(self, y_pred: np.ndarray, y_true: np.ndarray) -> float:
+    def forward(self, y_pred: np.ndarray, y_true: np.ndarray) -> float:
         pass
 
     @abstractmethod
@@ -36,7 +36,7 @@ class LossFunction(ABC):
 
 
 class Mse(LossFunction):
-    def compute_loss(self, y_pred: np.ndarray, y_true: np.ndarray) -> float:
+    def forward(self, y_pred: np.ndarray, y_true: np.ndarray) -> float:
         assert y_pred.shape == y_true.shape, (
             f"y_pred shape {y_pred.shape} needs to match y_true shape {y_true.shape}"
         )
@@ -69,3 +69,42 @@ class Mse(LossFunction):
 
     def __str__(self) -> str:
         return "Mse()"
+
+
+class BceWithLogits(LossFunction):
+    def forward(self, y_pred: np.ndarray, y_true: np.ndarray) -> float:
+        assert y_pred.shape == y_true.shape, (
+            f"y_pred shape {y_pred.shape} needs to match y_true shape {y_true.shape}"
+        )
+        assert y_pred.ndim == 2, f"y_pred must be 2-d, actual: {y_pred.ndim}"
+
+        loss_per_elem = (
+            np.maximum(y_pred, 0) - y_pred * y_true + np.logaddexp(0, -np.abs(y_pred))
+        )
+        return float(np.mean(loss_per_elem))
+
+    def backward(
+        self, upstream_grad: np.ndarray, parents: list[Node]
+    ) -> list[np.ndarray | None]:
+        assert len(parents) == 2
+        y_pred = parents[0].data
+        y_true = parents[1].data
+
+        assert y_pred.ndim == 2
+        assert y_true.ndim == 2
+        assert y_pred.shape == y_true.shape
+
+        assert upstream_grad.ndim == 0
+        assert upstream_grad.size == 1
+
+        N = y_pred.shape[0]
+        D = y_pred.shape[1]
+        # Note: dividing by (N * D) in case of multi-output BCE
+        dL_dy_pred = upstream_grad * (self.sigmoid(y_pred) - y_true) / (N * D)
+
+        return [dL_dy_pred, None]
+
+    def sigmoid(self, z: np.ndarray) -> np.ndarray:
+        with np.errstate(over="ignore", invalid="ignore"):
+            # Stable form (i.e. so exp(z) doesn't overflow)
+            return np.where(z >= 0, 1 / (1 + np.exp(-z)), np.exp(z) / (1 + np.exp(z)))

@@ -304,7 +304,7 @@ def test_numerical_gradient_check():
     analytical_b = linear.b_node.grad.copy()
 
     # Numerical gradient
-    def compute_loss_value():
+    def forward_value():
         y = linear(x)
         L = Mse()(y, y_true)
         return float(L.data)
@@ -315,10 +315,10 @@ def test_numerical_gradient_check():
             original = linear.W_node.data[i, j]
 
             linear.W_node.data[i, j] = original + epsilon
-            L_plus = compute_loss_value()
+            L_plus = forward_value()
 
             linear.W_node.data[i, j] = original - epsilon
-            L_minus = compute_loss_value()
+            L_minus = forward_value()
 
             linear.W_node.data[i, j] = original
 
@@ -332,10 +332,10 @@ def test_numerical_gradient_check():
         original = linear.b_node.data[i]
 
         linear.b_node.data[i] = original + epsilon
-        L_plus = compute_loss_value()
+        L_plus = forward_value()
 
         linear.b_node.data[i] = original - epsilon
-        L_minus = compute_loss_value()
+        L_minus = forward_value()
 
         linear.b_node.data[i] = original
 
