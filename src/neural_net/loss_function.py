@@ -77,6 +77,7 @@ class BceWithLogits(LossFunction):
             f"y_pred shape {y_pred.shape} needs to match y_true shape {y_true.shape}"
         )
         assert y_pred.ndim == 2, f"y_pred must be 2-d, actual: {y_pred.ndim}"
+        assert ((y_true == 0) | (y_true == 1)).all()
 
         loss_per_elem = (
             np.maximum(y_pred, 0) - y_pred * y_true + np.logaddexp(0, -np.abs(y_pred))
@@ -93,6 +94,7 @@ class BceWithLogits(LossFunction):
         assert y_pred.ndim == 2
         assert y_true.ndim == 2
         assert y_pred.shape == y_true.shape
+        assert ((y_true == 0) | (y_true == 1)).all()
 
         assert upstream_grad.ndim == 0
         assert upstream_grad.size == 1

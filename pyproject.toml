@@ -47,7 +47,7 @@ examples = ["matplotlib>=3.9"]
 
 [project.scripts]
 nn-regression-1d = "neural_net.examples.regression_1d:main"
-
+nn-classification-2d = "neural_net.examples.classification_2d:main"
 
 [tool.ruff]
 target-version = "py314"
